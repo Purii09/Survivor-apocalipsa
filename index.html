@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survivor: Apocalipsa</title>
+  <style>
+    body { margin: 0; font-family: monospace; background: #111; color: white; text-align: center; }
+    canvas { background: #222; image-rendering: pixelated; }
+    #ui { position: absolute; top: 10px; left: 10px; text-align: left; font-size: 14px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; }
+    #controls { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
+    .btn { font-size: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="300" height="300"></canvas>
+  <div id="ui">
+    <div id="stats">❤️ Viață: 100<br>💧 Apă: 100<br>🍖 Hrană: 100</div>
+    <div id="loot">📦 Loot: nimic</div>
+    <div id="craft">🔧 Craft: nimic</div>
+  </div>
+  <div id="controls">
+    <button class="btn" onclick="move(0, -1)">⬆️</button>
+    <button class="btn" onclick="move(-1, 0)">⬅️</button>
+    <button class="btn" onclick="move(1, 0)">➡️</button>
+    <button class="btn" onclick="move(0, 1)">⬇️</button>
+  </div>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const mapSize = 10;
+    const tileSize = 30;
+
+    const player = {
+      x: 1,
+      y: 1,
+      gender: prompt("Alege personajul: bărbat sau femeie") === "femeie" ? "femeie" : "bărbat",
+      hp: 100,
+      water: 100,
+      food: 100,
+      inventory: []
+    };
+
+    const locations = {
+      "2,2": "supermarket",
+      "5,5": "politie",
+      "8,8": "buncar"
+    };
+
+    const lootTable = {
+      supermarket: ["apă", "mâncare"],
+      politie: ["pistol", "muniție", "cuțit"],
+      buncar: ["trusă medicală", "pastile", "lemn", "sticlă"]
+    };
+
+    const recipes = {
+      "cuțit+lemn": "lance",
+      "sticlă+bandaj": "molotov"
+    };
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let y = 0; y < mapSize; y++) {
+        for (let x = 0; x < mapSize; x++) {
+          ctx.fillStyle = "#444";
+          ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
+        }
+      }
+
+      // player
+      ctx.fillStyle = player.gender === "femeie" ? "pink" : "skyblue";
+      ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize - 2, tileSize - 2);
+    }
+
+    function move(dx, dy) {
+      const nx = player.x + dx;
+      const ny = player.y + dy;
+      if (nx >= 0 && nx < mapSize && ny >= 0 && ny < mapSize) {
+        player.x = nx;
+        player.y = ny;
+        checkLocation();
+        draw();
+      }
+    }
+
+    function checkLocation() {
+      const key = `${player.x},${player.y}`;
+      const location = locations[key];
+      if (location) {
+        const items = lootTable[location];
+        const found = items[Math.floor(Math.random() * items.length)];
+        document.getElementById("loot").innerText = "📦 Loot: " + found;
+        player.inventory.push(found);
+        updateStats();
+        checkCrafting();
+      }
+    }
+
+    function checkCrafting() {
+      const inv = player.inventory;
+      let crafted = null;
+      for (let recipe in recipes) {
+        const [item1, item2] = recipe.split("+");
+        if (inv.includes(item1) && inv.includes(item2)) {
+          crafted = recipes[recipe];
+          inv.splice(inv.indexOf(item1), 1);
+          inv.splice(inv.indexOf(item2), 1);
+          inv.push(crafted);
+          document.getElementById("craft").innerText = "🔧 Craft: " + crafted;
+          break;
+        }
+      }
+    }
+
+    function updateStats() {
+      document.getElementById("stats").innerHTML = `❤️ Viață: ${player.hp}<br>💧 Apă: ${player.water}<br>🍖 Hrană: ${player.food}`;
+    }
+
+    draw();
+    updateStats();
+  </script>
+</body>
+</html>
